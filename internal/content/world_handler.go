@@ -1,12 +1,12 @@
-package main
+package content
 
 import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"fw/ipfs"
 	"io"
 	"io/ioutil"
+	"mistlib/internal/content/ipfs"
 	"os"
 	"path/filepath"
 	"strings"

@@ -1,11 +1,11 @@
-package main
+package content
 
 import (
 	"fmt"
 	"os"
 )
 
-func runCommand(name string, args []string) {
+func RunCommand(name string, args []string) {
 	commandHandler := map[string]func([]string){
 		"init":           handleInit,
 		"switch":         handleSwitch,

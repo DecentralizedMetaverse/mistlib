@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"sync"
 
-	"mistlib/api"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -53,6 +51,4 @@ func readMessages() {
 }
 
 func main() {
-	fmt.Println("Starting server...")
-	api.StartServer() // サーバー起動
 }

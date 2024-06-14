@@ -1,4 +1,4 @@
-package main
+package content
 
 type HeadData struct {
 	CurrentWorld string `yaml:"currentWorld"`

@@ -1,15 +1,17 @@
-package main
+package content
 
 import (
 	"fmt"
 	"net/http"
 	"os"
+
+	"mistlib/internal/content"
 )
 
 func main() {
 	if len(os.Args) > 1 {
 		// コマンドライン引数が存在する場合、コマンドラインモードで実行
-		runCommand(os.Args[1], os.Args[2:])
+		content.RunCommand(os.Args[1], os.Args[2:])
 	} else {
 		// 引数がない場合、HTTPサーバーを起動
 		http.HandleFunc("/init", handleInitAPI)
