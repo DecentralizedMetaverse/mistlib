@@ -36,3 +36,11 @@ This program is an automatic conversion of "https://github.com/DecentralizedMeta
 
 ## Programming
 - RPC
+
+## Memo
+- real-time communication
+  - dll or api server
+- content management
+  - command or api server
+- To find friends or worlds
+  - use dht
