@@ -48,7 +48,7 @@ func decryptData(encryptedData []byte) ([]byte, error) {
 }
 
 func loadPassword() error {
-	data, err := memFS.ReadFile(".fw/password")
+	data, err := localFS.ReadFile(".fw/password")
 	if err != nil {
 		return err
 	}

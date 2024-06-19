@@ -16,7 +16,7 @@ import (
 )
 
 func handleGetWorldData(args []string) {
-	headData, err := memFS.ReadFile(".fw/HEAD")
+	headData, err := localFS.ReadFile(".fw/HEAD")
 	if err != nil {
 		fmt.Printf("[World] Error reading HEAD: %v\n", err)
 		return
@@ -29,7 +29,7 @@ func handleGetWorldData(args []string) {
 		return
 	}
 
-	worldDataStr, err := memFS.ReadFile(filepath.Join(".fw", "worlds", headYamlData.Guid))
+	worldDataStr, err := localFS.ReadFile(filepath.Join(".fw", "worlds", headYamlData.Guid))
 	if err != nil {
 		fmt.Printf("[World] Error reading world data: %v\n", err)
 		return
@@ -51,7 +51,7 @@ func handleGetWorldData(args []string) {
 	worldAllData := make([]WorldSingleData, 0)
 	for _, cid := range worldYamlData.CID {
 		metaFilePath := filepath.Join(".fw", "objects", cid)
-		file, err := memFS.ReadFile(metaFilePath)
+		file, err := localFS.ReadFile(metaFilePath)
 		if err != nil {
 			fmt.Printf("[World] Error reading file: %v\n", err)
 			return
@@ -83,7 +83,7 @@ func handleGetWorldData(args []string) {
 		fmt.Printf("[World] Error parsing world data: %v\n", err)
 		return
 	}
-	err = memFS.WriteFile(savePath, worldAllDataYaml)
+	err = localFS.WriteFile(savePath, worldAllDataYaml)
 	if err != nil {
 		fmt.Printf("[World] Error saving world data: %v\n", err)
 		return
@@ -112,7 +112,7 @@ func handleDownloadWorld(args []string) {
 		return
 	}
 
-	worldData, err := memFS.ReadFile(worldPath)
+	worldData, err := localFS.ReadFile(worldPath)
 	if err != nil {
 		fmt.Printf("[World] Error reading world data: %v\n", err)
 		return
@@ -139,7 +139,7 @@ func handleDownloadWorld(args []string) {
 
 	newWorldPath := filepath.Join(".fw", "worlds", worldYamlData.GUID)
 
-	err = memFS.WriteFile(newWorldPath, decompressedData)
+	err = localFS.WriteFile(newWorldPath, decompressedData)
 	if err != nil {
 		fmt.Printf("[World] Error saving world data: %v\n", err)
 		return
@@ -147,7 +147,7 @@ func handleDownloadWorld(args []string) {
 }
 
 func handleGetWorldCID(args []string) {
-	headData, err := memFS.ReadFile(".fw/HEAD")
+	headData, err := localFS.ReadFile(".fw/HEAD")
 	if err != nil {
 		fmt.Printf("[World] Error reading HEAD: %v\n", err)
 		return
@@ -162,7 +162,7 @@ func handleGetWorldCID(args []string) {
 	guid := headYamlData.Guid
 	filePath := filepath.Join(".fw", "worlds", guid)
 
-	file, err := memFS.ReadFile(filePath)
+	file, err := localFS.ReadFile(filePath)
 	if err != nil {
 		fmt.Printf("[World] Error opening file %s: %v\n", filePath, err)
 		return
@@ -190,7 +190,7 @@ func handleGetWorldCID(args []string) {
 	}
 
 	objectPath := filepath.Join(".fw", "objects", hashString)
-	err = memFS.WriteFile(objectPath, encryptedData)
+	err = localFS.WriteFile(objectPath, encryptedData)
 	if err != nil {
 		fmt.Printf("[World] Error saving file %s: %v\n", objectPath, err)
 		return
@@ -256,7 +256,7 @@ func handleSwitch(args []string) {
 }
 
 func loadWorldList(worldListPath string) (map[string]string, error) {
-	worldListData, err := memFS.ReadFile(worldListPath)
+	worldListData, err := localFS.ReadFile(worldListPath)
 	if err != nil {
 		return nil, err
 	}
@@ -276,13 +276,13 @@ func loadWorldList(worldListPath string) (map[string]string, error) {
 func updateHead(worldName, worldGuid string) error {
 	headPath := filepath.Join(".fw", "HEAD")
 	headContent := fmt.Sprintf("currentWorld: %s\nguid: %s\n", worldName, worldGuid)
-	return memFS.WriteFile(headPath, []byte(headContent))
+	return localFS.WriteFile(headPath, []byte(headContent))
 }
 
 func createWorldFile(worldName, worldGuid string) error {
 	worldPath := filepath.Join(".fw", "worlds", worldGuid)
 	worldMeta := fmt.Sprintf("name: %s\nguid: %s\ncid: %s\n", worldName, worldGuid, "")
-	return memFS.WriteFile(worldPath, []byte(worldMeta))
+	return localFS.WriteFile(worldPath, []byte(worldMeta))
 }
 
 func saveWorldList(worldListPath string, worldDict map[string]string) error {
@@ -290,7 +290,7 @@ func saveWorldList(worldListPath string, worldDict map[string]string) error {
 	for k, v := range worldDict {
 		newWorldData = append(newWorldData, []byte(fmt.Sprintf("%s: %s\n", k, v))...)
 	}
-	return memFS.WriteFile(worldListPath, newWorldData)
+	return localFS.WriteFile(worldListPath, newWorldData)
 }
 
 func handleGet(args []string) {
@@ -315,7 +315,7 @@ func handleGet(args []string) {
 		return
 	}
 
-	encryptedMetaData, err := memFS.ReadFile(metaDataPath)
+	encryptedMetaData, err := localFS.ReadFile(metaDataPath)
 	if err != nil {
 		fmt.Printf("[World] Error reading metadata %s: %v\n", metaDataPath, err)
 		return
@@ -348,7 +348,7 @@ func handleGet(args []string) {
 		return
 	}
 
-	encryptedFileData, err := memFS.ReadFile(filePath)
+	encryptedFileData, err := localFS.ReadFile(filePath)
 	if err != nil {
 		fmt.Printf("[World] Error reading file %s: %v\n", filePath, err)
 		return
@@ -366,7 +366,7 @@ func handleGet(args []string) {
 		return
 	}
 
-	err = memFS.WriteFile(filePath, decompressedFileData)
+	err = localFS.WriteFile(filePath, decompressedFileData)
 	if err != nil {
 		fmt.Printf("[World] Error saving decompressed file %s: %v\n", filePath, err)
 		return
@@ -435,7 +435,7 @@ func handlePut(args []string) {
 	}
 
 	objectPath := filepath.Join(".fw", "objects", hashString)
-	err = memFS.WriteFile(objectPath, encryptedData)
+	err = localFS.WriteFile(objectPath, encryptedData)
 	if err != nil {
 		fmt.Printf("[World] Error saving file %s: %v\n", objectPath, err)
 		return
@@ -448,7 +448,7 @@ func handlePut(args []string) {
 		return
 	}
 
-	err = memFS.Rename(objectPath, filepath.Join(".fw", "objects", cid))
+	err = localFS.Rename(objectPath, filepath.Join(".fw", "objects", cid))
 	if err != nil {
 		fmt.Printf("[World] Error renaming file: %v\n", err)
 		return
@@ -462,7 +462,7 @@ func handlePut(args []string) {
 	}
 
 	metaDataPath := filepath.Join(".fw", "objects", hashString)
-	err = memFS.WriteFile(metaDataPath, encryptedMetaData)
+	err = localFS.WriteFile(metaDataPath, encryptedMetaData)
 	if err != nil {
 		fmt.Printf("[World] Error creating metadata file %s: %v\n", metaDataPath, err)
 		return
@@ -474,7 +474,7 @@ func handlePut(args []string) {
 		return
 	}
 
-	err = memFS.Rename(metaDataPath, filepath.Join(".fw", "objects", metaCid))
+	err = localFS.Rename(metaDataPath, filepath.Join(".fw", "objects", metaCid))
 	if err != nil {
 		fmt.Printf("[World] Error renaming metadata file: %v\n", err)
 		return
@@ -502,7 +502,7 @@ func handleSetPassword(args []string) {
 	hashedPassword := sha256.Sum256([]byte(password))
 	key = hashedPassword[:]
 
-	err := memFS.WriteFile(".fw/password", []byte(hex.EncodeToString(key)))
+	err := localFS.WriteFile(".fw/password", []byte(hex.EncodeToString(key)))
 	if err != nil {
 		fmt.Printf("[World] Error saving password: %v\n", err)
 		return
@@ -512,7 +512,7 @@ func handleSetPassword(args []string) {
 }
 
 func updateWorldData(metaCid string) error {
-	headData, err := memFS.ReadFile(".fw/HEAD")
+	headData, err := localFS.ReadFile(".fw/HEAD")
 	if err != nil {
 		return err
 	}
@@ -524,7 +524,7 @@ func updateWorldData(metaCid string) error {
 	}
 
 	worldDataPath := filepath.Join(".fw", "worlds", headYamlData.Guid)
-	worldDataStr, err := memFS.ReadFile(worldDataPath)
+	worldDataStr, err := localFS.ReadFile(worldDataPath)
 	if err != nil {
 		return err
 	}
@@ -542,11 +542,13 @@ func updateWorldData(metaCid string) error {
 		return err
 	}
 
-	return memFS.WriteFile(worldDataPath, newWorldData)
+	return localFS.WriteFile(worldDataPath, newWorldData)
 }
 
 func handleInit(args []string) {
-	if _, err := memFS.Stat(".fw"); err == nil {
+	ipfs.InitIPFS()
+
+	if _, err := localFS.Stat(".fw"); err == nil {
 		fmt.Println("[World] .fw repository already exists.")
 		return
 	}
@@ -570,10 +572,10 @@ func handleInit(args []string) {
 	}
 
 	for _, dir := range directories {
-		memFS.MkdirAll(dir)
+		localFS.MkdirAll(dir)
 	}
 	for file, content := range files {
-		memFS.WriteFile(file, []byte(content))
+		localFS.WriteFile(file, []byte(content))
 	}
 }
 
@@ -583,12 +585,31 @@ func handleCat(args []string) {
 		return
 	}
 
+	err := loadPassword()
+	if err != nil {
+		fmt.Printf("[World] Error loading password: %v\n", err)
+		return
+	}
+
 	filePath := args[0]
-	content, err := memFS.ReadFile(filePath)
+
+	encryptedFileData, err := localFS.ReadFile(filePath)
 	if err != nil {
 		fmt.Printf("[World] Error reading file %s: %v\n", filePath, err)
 		return
 	}
 
-	fmt.Printf("[World] Content of %s:\n%s\n", filePath, string(content))
+	decryptedFileData, err := decryptData(encryptedFileData)
+	if err != nil {
+		fmt.Printf("[World] Error decrypting file %s: %v\n", filePath, err)
+		return
+	}
+
+	decompressedFileData, err := decompressData(decryptedFileData)
+	if err != nil {
+		fmt.Printf("[World] Error decompressing file %s: %v\n", filePath, err)
+		return
+	}
+
+	fmt.Printf("[World] Content of %s:\n%s\n", filePath, string(decompressedFileData))
 }
