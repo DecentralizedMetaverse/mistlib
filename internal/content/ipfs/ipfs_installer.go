@@ -29,23 +29,6 @@ var (
 	ipfsExecutablePath    string
 )
 
-func init() {
-	switch runtime.GOOS {
-	case "windows":
-		ipfsDownloadUrlFormat = "https://dist.ipfs.tech/kubo/%s/kubo_%s_windows-amd64.zip"
-		ipfsExecutablePath = filepath.Join(savePath, "kubo", "ipfs.exe")
-	case "linux":
-		ipfsDownloadUrlFormat = "https://dist.ipfs.tech/kubo/%s/kubo_%s_linux-amd64.tar.gz"
-		ipfsExecutablePath = filepath.Join(savePath, "kubo", "ipfs")
-	case "darwin":
-		ipfsDownloadUrlFormat = "https://dist.ipfs.tech/kubo/%s/kubo_%s_darwin-amd64.tar.gz"
-		ipfsExecutablePath = filepath.Join(savePath, "kubo", "ipfs")
-	default:
-		fmt.Println("Unsupported OS")
-		os.Exit(1)
-	}
-}
-
 func InstallIPFS() error {
 	installedVersion := getInstalledVersion()
 	latestVersion, err := getLatestStableVersion()
@@ -67,14 +50,41 @@ func InstallIPFS() error {
 	}
 
 	// IPFSの初期化を行う
-	cmd := exec.Command(ipfsExecutablePath, "init")
-	output, err := cmd.CombinedOutput()
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("[IPFS] Init error: %v, %s", err, string(output))
+		return fmt.Errorf("[IPFS] Failed to get user home directory: %v", err)
+	}
+	ipfsPath := filepath.Join(homeDir, ".ipfs")
+
+	if _, err := os.Stat(ipfsPath); os.IsNotExist(err) {
+		cmd := exec.Command(ipfsExecutablePath, "init")
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("[IPFS] Init error: %v, %s", err, string(output))
+		}
+		fmt.Println("[IPFS] IPFS initialization complete.")
+	} else {
+		fmt.Println("[IPFS] IPFS initialization skipped. .ipfs directory already exists.")
 	}
 
-	fmt.Println("[IPFS] Init output:", string(output))
 	return nil
+}
+
+func init() {
+	switch runtime.GOOS {
+	case "windows":
+		ipfsDownloadUrlFormat = "https://dist.ipfs.tech/kubo/%s/kubo_%s_windows-amd64.zip"
+		ipfsExecutablePath = filepath.Join(savePath, "kubo", "ipfs.exe")
+	case "linux":
+		ipfsDownloadUrlFormat = "https://dist.ipfs.tech/kubo/%s/kubo_%s_linux-amd64.tar.gz"
+		ipfsExecutablePath = filepath.Join(savePath, "kubo", "ipfs")
+	case "darwin":
+		ipfsDownloadUrlFormat = "https://dist.ipfs.tech/kubo/%s/kubo_%s_darwin-amd64.tar.gz"
+		ipfsExecutablePath = filepath.Join(savePath, "kubo", "ipfs")
+	default:
+		fmt.Println("Unsupported OS")
+		os.Exit(1)
+	}
 }
 
 func isIpfsInstalled() bool {

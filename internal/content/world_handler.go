@@ -546,10 +546,9 @@ func updateWorldData(metaCid string) error {
 }
 
 func handleInit(args []string) {
-	ipfs.InitIPFS()
-
 	if _, err := localFS.Stat(".fw"); err == nil {
 		fmt.Println("[World] .fw repository already exists.")
+		ipfs.InitIPFS()
 		return
 	}
 
@@ -577,6 +576,8 @@ func handleInit(args []string) {
 	for file, content := range files {
 		localFS.WriteFile(file, []byte(content))
 	}
+
+	ipfs.InitIPFS()
 }
 
 func handleCat(args []string) {
