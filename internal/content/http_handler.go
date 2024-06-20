@@ -56,3 +56,9 @@ func HandleGetWorldDataAPI(w http.ResponseWriter, r *http.Request) {
 	handleGetWorldData(nil)
 	w.Write([]byte("Get world data operation completed."))
 }
+
+func HandleSetCustomDataAPI(w http.ResponseWriter, r *http.Request) {
+	data := r.URL.Query().Get("data")
+	handleSetCustomData([]string{data})
+	w.Write([]byte("Set custom data operation completed."))
+}

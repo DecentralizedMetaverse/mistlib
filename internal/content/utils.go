@@ -2,9 +2,10 @@ package content
 
 import (
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 func parseCoordinates(args []string) ([]float64, error) {
@@ -19,14 +20,29 @@ func parseCoordinates(args []string) ([]float64, error) {
 	return coords, nil
 }
 
-func generateMetaDataContent(filePath, cid string, coords []float64) string {
-	fileName := filepath.Base(filePath)
-	return fmt.Sprintf("cid: %s\nfile: %s\nx: %f\ny: %f\nz: %f\nrx: %f\nry: %f\nrz: %f\nsx: %f\nsy: %f\nsz: %f\n",
-		cid, fileName, coords[0], coords[1], coords[2], coords[3], coords[4], coords[5], coords[6], coords[7], coords[8])
+func generateMetaDataContent(filePath, cid string, coords []float64) []byte {
+	var metaData MetaData
+	metaData.CID = cid
+	metaData.File = filePath
+	metaData.X = coords[0]
+	metaData.Y = coords[1]
+	metaData.Z = coords[2]
+	metaData.RX = coords[3]
+	metaData.RY = coords[4]
+	metaData.RZ = coords[5]
+	metaData.SX = coords[6]
+	metaData.SY = coords[7]
+	metaData.SZ = coords[8]
+	metaBytes, err := yaml.Marshal(metaData)
+	if err != nil {
+		fmt.Println("Error marshalling metadata: ", err)
+		return nil
+	}
+	return metaBytes
 }
 
-func encryptAndCompressMetaData(metaDataContent string) ([]byte, error) {
-	compressedMetaData, err := compressData([]byte(metaDataContent))
+func encryptAndCompressMetaData(metaDataContent []byte) ([]byte, error) {
+	compressedMetaData, err := compressData(metaDataContent)
 	if err != nil {
 		return nil, err
 	}

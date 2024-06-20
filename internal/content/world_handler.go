@@ -48,7 +48,7 @@ func handleGetWorldData(args []string) {
 		return
 	}
 
-	worldAllData := make([]WorldSingleData, 0)
+	worldAllData := make([]MetaData, 0)
 	for _, cid := range worldYamlData.CID {
 		metaFilePath := filepath.Join(".fw", "objects", cid)
 		file, err := localFS.ReadFile(metaFilePath)
@@ -68,7 +68,7 @@ func handleGetWorldData(args []string) {
 			fmt.Printf("[World] Error decompressing world data: %v\n", err)
 			return
 		}
-		var worldSingleData WorldSingleData
+		var worldSingleData MetaData
 		err = yaml.Unmarshal(decompressedData, &worldSingleData)
 		if err != nil {
 			fmt.Printf("[World] Error parsing world data: %v\n", err)
@@ -204,6 +204,13 @@ func handleGetWorldCID(args []string) {
 	}
 
 	fmt.Printf("[World] World data uploaded to IPFS with CID: %s\n", cid)
+
+	// ファイル名を変更
+	err = localFS.Rename(objectPath, filepath.Join(".fw", "objects", cid))
+	if err != nil {
+		fmt.Printf("[World] Error renaming file: %v\n", err)
+		return
+	}
 }
 
 func handleSwitch(args []string) {
@@ -492,6 +499,107 @@ func handlePut(args []string) {
 	fmt.Println("[World] World data updated successfully.")
 }
 
+func handleSetCustomData(args []string) {
+	if len(args) < 2 {
+		fmt.Println("[World] Usage: fw set-custom-data <meta-cid> <value>")
+		return
+	}
+
+	cid := args[0]
+	customData := args[1]
+	delete := true // 前のデータを自動で削除するかどうか
+	if len(args) > 2 {
+		delete = args[2] == "true"
+	}
+
+	metaFilePath := filepath.Join(".fw", "objects", cid)
+	metaFile, err := localFS.ReadFile(metaFilePath)
+	if err != nil {
+		fmt.Printf("[World] Error reading file %s: %v\n", metaFilePath, err)
+		return
+	}
+
+	// パスワードを読み込む
+	err = loadPassword()
+	if err != nil {
+		fmt.Printf("[World] Error loading password: %v\n", err)
+		return
+	}
+
+	decryptedMetaFile, err := decryptData(metaFile)
+	if err != nil {
+		fmt.Printf("[World] Error decrypting file %s: %v\n", metaFilePath, err)
+		return
+	}
+
+	decompressedMetaFile, err := decompressData(decryptedMetaFile)
+	if err != nil {
+		fmt.Printf("[World] Error decompressing file %s: %v\n", metaFilePath, err)
+		return
+	}
+
+	var metaFileData MetaData
+	err = yaml.Unmarshal(decompressedMetaFile, &metaFileData)
+	if err != nil {
+		fmt.Printf("[World] Error parsing file %s: %v\n", metaFilePath, err)
+		return
+	}
+
+	metaFileData.Custom = customData
+
+	newMetaFileData, err := yaml.Marshal(&metaFileData)
+	if err != nil {
+		fmt.Printf("[World] Error marshalling new metadata: %v\n", err)
+		return
+	}
+
+	encryptedMetaFileData, err := encryptAndCompressMetaData(newMetaFileData)
+	if err != nil {
+		fmt.Printf("[World] Error encrypting new metadata: %v\n", err)
+		return
+	}
+
+	guid, err := uuid.NewUUID()
+	if err != nil {
+		fmt.Printf("[World] Error generating GUID: %v\n", err)
+		return
+	}
+
+	guidString := guid.String()
+
+	newMetaFilePath := filepath.Join(".fw", "objects", guidString)
+	err = localFS.WriteFile(newMetaFilePath, encryptedMetaFileData)
+	if err != nil {
+		fmt.Printf("[World] Error saving new metadata: %v\n", err)
+		return
+	}
+
+	// ipfs にアップロード
+	newMetaCid, err := ipfs.Upload(newMetaFilePath)
+	if err != nil {
+		fmt.Printf("[World] Error uploading new metadata to IPFS: %v\n", err)
+		return
+	}
+
+	err = localFS.Rename(newMetaFilePath, filepath.Join(".fw", "objects", newMetaCid))
+	if err != nil {
+		fmt.Printf("[World] Error renaming new metadata: %v\n", err)
+		return
+	}
+
+	newMetaFilePath = filepath.Join(".fw", "objects", newMetaCid)
+
+	if delete {
+		err = localFS.Remove(metaFilePath)
+		if err != nil {
+			fmt.Printf("[World] Error deleting old metadata: %v\n", err)
+			return
+		}
+	}
+
+	fmt.Println("[World] Custom data set successfully. New metadata saved as", newMetaFilePath)
+}
+
 func handleSetPassword(args []string) {
 	if len(args) < 1 {
 		fmt.Println("[World] Usage: fw set-password <password>")
@@ -592,7 +700,8 @@ func handleCat(args []string) {
 		return
 	}
 
-	filePath := args[0]
+	// filePath := args[0]
+	filePath := filepath.Join(".fw", "objects", args[0])
 
 	encryptedFileData, err := localFS.ReadFile(filePath)
 	if err != nil {

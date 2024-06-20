@@ -7,15 +7,16 @@ import (
 
 func RunCommand(name string, args []string) {
 	commandHandler := map[string]func([]string){
-		"init":           handleInit,
-		"switch":         handleSwitch,
-		"get":            handleGet,
-		"put":            handlePut,
-		"set-password":   handleSetPassword,
-		"cat":            handleCat,
-		"get-world-cid":  handleGetWorldCID,
-		"download-world": handleDownloadWorld,
-		"get-world-data": handleGetWorldData,
+		"init":            handleInit,
+		"switch":          handleSwitch,
+		"get":             handleGet,
+		"put":             handlePut,
+		"set-password":    handleSetPassword,
+		"cat":             handleCat,
+		"get-world-cid":   handleGetWorldCID,
+		"download-world":  handleDownloadWorld,
+		"get-world-data":  handleGetWorldData,
+		"set-custom-data": handleSetCustomData,
 	}
 
 	if handler, found := commandHandler[name]; found {

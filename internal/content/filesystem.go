@@ -69,3 +69,14 @@ func (fs *LocalFileSystem) Rename(oldPath, newPath string) error {
 	}
 	return nil
 }
+
+func (fs *LocalFileSystem) Remove(path string) error {
+	fs.mu.Lock()
+	defer fs.mu.Unlock()
+
+	err := os.Remove(path)
+	if err != nil {
+		return fmt.Errorf("file not found: %s", path)
+	}
+	return nil
+}
