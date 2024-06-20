@@ -600,6 +600,107 @@ func handleSetCustomData(args []string) {
 	fmt.Println("[World] Custom data set successfully. New metadata saved as", newMetaFilePath)
 }
 
+func handleSetParent(args []string) {
+	if len(args) < 2 {
+		fmt.Println("[World] Usage: fw set-parent <child-cid> <parent-cid>")
+		return
+	}
+
+	childCid := args[0]
+	parentCid := args[1]
+	delete := true // 前のデータを自動で削除するかどうか
+	if len(args) > 2 {
+		delete = args[2] == "true"
+	}
+
+	// load password
+	err := loadPassword()
+	if err != nil {
+		fmt.Printf("[World] Error loading password: %v\n", err)
+		return
+	}
+
+	parentMetaPath := filepath.Join(".fw", "objects", parentCid)
+	parentMetaFile, err := localFS.ReadFile(parentMetaPath)
+	if err != nil {
+		fmt.Printf("[World] Error reading parent metadata: %v\n", err)
+		return
+	}
+
+	decryptedParentMetaFile, err := decryptData(parentMetaFile)
+	if err != nil {
+		fmt.Printf("[World] Error decrypting parent metadata: %v\n", err)
+		return
+	}
+
+	decompressedParentMetaFile, err := decompressData(decryptedParentMetaFile)
+	if err != nil {
+		fmt.Printf("[World] Error decompressing parent metadata: %v\n", err)
+		return
+	}
+
+	var parentMetaData MetaData
+	err = yaml.Unmarshal(decompressedParentMetaFile, &parentMetaData)
+	if err != nil {
+		fmt.Printf("[World] Error parsing parent metadata: %v\n", err)
+		return
+	}
+
+	parentMetaData.ChildCIDs = append(parentMetaData.ChildCIDs, childCid)
+
+	newParentMetaFile, err := yaml.Marshal(&parentMetaData)
+	if err != nil {
+		fmt.Printf("[World] Error marshalling new parent metadata: %v\n", err)
+		return
+	}
+
+	encryptedParentMetaFile, err := encryptAndCompressMetaData(newParentMetaFile)
+	if err != nil {
+		fmt.Printf("[World] Error encrypting new parent metadata: %v\n", err)
+		return
+	}
+
+	guid, err := uuid.NewUUID()
+	if err != nil {
+		fmt.Printf("[World] Error generating GUID: %v\n", err)
+		return
+	}
+
+	guidString := guid.String()
+
+	newParentMetaPath := filepath.Join(".fw", "objects", guidString)
+	err = localFS.WriteFile(newParentMetaPath, encryptedParentMetaFile)
+	if err != nil {
+		fmt.Printf("[World] Error saving new parent metadata: %v\n", err)
+		return
+	}
+
+	// ipfs にアップロード
+	newParentMetaCid, err := ipfs.Upload(newParentMetaPath)
+	if err != nil {
+		fmt.Printf("[World] Error uploading new parent metadata to IPFS: %v\n", err)
+		return
+	}
+
+	err = localFS.Rename(newParentMetaPath, filepath.Join(".fw", "objects", newParentMetaCid))
+	if err != nil {
+		fmt.Printf("[World] Error renaming new parent metadata: %v\n", err)
+		return
+	}
+
+	newParentMetaPath = filepath.Join(".fw", "objects", newParentMetaCid)
+
+	if delete {
+		err = localFS.Remove(parentMetaPath)
+		if err != nil {
+			fmt.Printf("[World] Error deleting old parent metadata: %v\n", err)
+			return
+		}
+	}
+
+	fmt.Println("[World] Parent data set successfully. New metadata saved as", newParentMetaPath)
+}
+
 func handleSetPassword(args []string) {
 	if len(args) < 1 {
 		fmt.Println("[World] Usage: fw set-password <password>")

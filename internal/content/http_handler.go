@@ -58,7 +58,13 @@ func HandleGetWorldDataAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleSetCustomDataAPI(w http.ResponseWriter, r *http.Request) {
-	data := r.URL.Query().Get("data")
-	handleSetCustomData([]string{data})
+	args := r.URL.Query().Get("args")
+	handleSetCustomData(strings.Split(args, " "))
 	w.Write([]byte("Set custom data operation completed."))
+}
+
+func HandleSetParentAPI(w http.ResponseWriter, r *http.Request) {
+	args := r.URL.Query().Get("args")
+	handleSetParent(strings.Split(args, " "))
+	w.Write([]byte("Set parent operation completed."))
 }
