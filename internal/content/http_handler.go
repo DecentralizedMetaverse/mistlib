@@ -18,9 +18,9 @@ func HandleSwitchAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleGetAPI(w http.ResponseWriter, r *http.Request) {
-	cid := r.URL.Query().Get("cid")
-	handleGet([]string{cid})
-	w.Write([]byte(fmt.Sprintf("Get operation completed for CID: %s", cid)))
+	args := r.URL.Query().Get("args")
+	handleGet(strings.Split(args, " "))
+	w.Write([]byte("Get operation completed."))
 }
 
 func HandlePutAPI(w http.ResponseWriter, r *http.Request) {
@@ -52,8 +52,9 @@ func HandleDownloadWorldAPI(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf("Download world operation completed for CID: %s", cid)))
 }
 
-func HandleGetWorldDataAPI(w http.ResponseWriter, r *http.Request) {
-	handleGetWorldData(nil)
+func HandleGetWorldInfoAPI(w http.ResponseWriter, r *http.Request) {
+	args := r.URL.Query().Get("args")
+	handleGetWorldInfo(strings.Split(args, " "))
 	w.Write([]byte("Get world data operation completed."))
 }
 

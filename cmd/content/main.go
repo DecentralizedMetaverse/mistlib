@@ -22,7 +22,7 @@ func main() {
 		http.HandleFunc("/cat", content.HandleCatAPI)
 		http.HandleFunc("/get-world-cid", content.HandleGetWorldCIDAPI)
 		http.HandleFunc("/download-world", content.HandleDownloadWorldAPI)
-		http.HandleFunc("/get-world-data", content.HandleGetWorldDataAPI)
+		http.HandleFunc("/get-world-info", content.HandleGetWorldInfoAPI)
 		http.HandleFunc("/set-custom-data", content.HandleSetCustomDataAPI)
 		http.HandleFunc("/set-parent", content.HandleSetParentAPI)
 		http.HandleFunc("/update", content.HandleUpdateAPI)

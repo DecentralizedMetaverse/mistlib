@@ -15,7 +15,7 @@ func RunCommand(name string, args []string) {
 		"cat":             handleCat,
 		"get-world-cid":   handleGetWorldCID,
 		"download-world":  handleDownloadWorld,
-		"get-world-data":  handleGetWorldData,
+		"get-world-info":  handleGetWorldInfo,
 		"set-custom-data": handleSetCustomData,
 		"set-parent":      handleSetParent,
 		"update":          handleUpdate,

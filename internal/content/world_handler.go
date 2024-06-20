@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func handleGetWorldData(args []string) {
+func handleGetWorldInfo(args []string) {
 	headData, err := localFS.ReadFile(".fw/HEAD")
 	if err != nil {
 		fmt.Printf("[World] Error reading HEAD: %v\n", err)
@@ -312,39 +312,47 @@ func handleGet(args []string) {
 		return
 	}
 
-	cid := args[0]
-	metaDataPath := filepath.Join(".fw", "objects", cid)
+	fileCid := ""
+	fileName := ""
 
-	// Simulate IPFS Download
-	err = ipfs.Download(cid, metaDataPath)
-	if err != nil {
-		fmt.Printf("[World] Error downloading metadata: %v\n", err)
-		return
-	}
+	if len(args) == 1 {
+		cid := args[0]
+		metaDataPath := filepath.Join(".fw", "objects", cid)
 
-	encryptedMetaData, err := localFS.ReadFile(metaDataPath)
-	if err != nil {
-		fmt.Printf("[World] Error reading metadata %s: %v\n", metaDataPath, err)
-		return
-	}
+		// Simulate IPFS Download
+		err = ipfs.Download(cid, metaDataPath)
+		if err != nil {
+			fmt.Printf("[World] Error downloading metadata: %v\n", err)
+			return
+		}
 
-	decryptedMetaData, err := decryptData(encryptedMetaData)
-	if err != nil {
-		fmt.Printf("[World] Error decrypting metadata %s: %v\n", metaDataPath, err)
-		return
-	}
+		encryptedMetaData, err := localFS.ReadFile(metaDataPath)
+		if err != nil {
+			fmt.Printf("[World] Error reading metadata %s: %v\n", metaDataPath, err)
+			return
+		}
 
-	decompressedMetaData, err := decompressData(decryptedMetaData)
-	if err != nil {
-		fmt.Printf("[World] Error decompressing metadata %s: %v\n", metaDataPath, err)
-		return
-	}
+		decryptedMetaData, err := decryptData(encryptedMetaData)
+		if err != nil {
+			fmt.Printf("[World] Error decrypting metadata %s: %v\n", metaDataPath, err)
+			return
+		}
 
-	metaDataContent := string(decompressedMetaData)
-	fileCid, fileName, err := extractFileDetailsFromMetaData(metaDataContent)
-	if err != nil {
-		fmt.Printf("[World] Error extracting file details from metadata %s: %v\n", metaDataPath, err)
-		return
+		decompressedMetaData, err := decompressData(decryptedMetaData)
+		if err != nil {
+			fmt.Printf("[World] Error decompressing metadata %s: %v\n", metaDataPath, err)
+			return
+		}
+
+		metaDataContent := string(decompressedMetaData)
+		fileCid, fileName, err = extractFileDetailsFromMetaData(metaDataContent)
+		if err != nil {
+			fmt.Printf("[World] Error extracting file details from metadata %s: %v\n", metaDataPath, err)
+			return
+		}
+	} else {
+		fileCid = args[0]
+		fileName = args[1]
 	}
 
 	filePath := filepath.Join(".fw", "content", filepath.Base(fileName))
@@ -490,13 +498,13 @@ func handlePut(args []string) {
 	fmt.Printf("[World] File saved as %s\n", filepath.Join(".fw", "objects", cid))
 	fmt.Printf("[World] Metadata saved as %s\n", filepath.Join(".fw", "objects", metaCid))
 
-	err = updateWorldData(metaCid)
+	err = addWorldData(metaCid)
 	if err != nil {
 		fmt.Printf("[World] Error updating world data: %v\n", err)
 		return
 	}
 
-	fmt.Println("[World] World data updated successfully.")
+	fmt.Println("[World] World data updated successfully. CID: " + metaCid)
 }
 
 func handleUpdate(args []string) {
@@ -595,13 +603,32 @@ func handleUpdate(args []string) {
 		return
 	}
 
-	err = localFS.Remove(metaFilePath)
+	err = removeOldMetaFile(metaCid, newMetaCid)
 	if err != nil {
-		fmt.Printf("[World] Error deleting old metadata: %v\n", err)
+		fmt.Printf("[World] Error removing old metadata: %v\n", err)
+		return
+	}
+
+	// world dataの更新
+	err = updateWorldData(metaCid, newMetaCid)
+	if err != nil {
+		fmt.Printf("[World] Error updating world data: %v\n", err)
 		return
 	}
 
 	fmt.Println("[World] World data updated successfully. CID:", newMetaCid)
+}
+
+func removeOldMetaFile(metaCid string, newMetaCid string) error {
+	if metaCid != newMetaCid {
+		metaFilePath := filepath.Join(".fw", "objects", metaCid)
+		err := localFS.Remove(metaFilePath)
+		if err != nil {
+			fmt.Printf("[World] Error deleting old metadata: %v\n", err)
+			return err
+		}
+	}
+	return nil
 }
 
 func handleSetCustomData(args []string) {
@@ -695,11 +722,18 @@ func handleSetCustomData(args []string) {
 	newMetaFilePath = filepath.Join(".fw", "objects", newMetaCid)
 
 	if delete {
-		err = localFS.Remove(metaFilePath)
+		err = removeOldMetaFile(cid, newMetaCid)
 		if err != nil {
-			fmt.Printf("[World] Error deleting old metadata: %v\n", err)
+			fmt.Printf("[World] Error removing old metadata: %v\n", err)
 			return
 		}
+	}
+
+	// world dataの更新
+	err = updateWorldData(cid, newMetaCid)
+	if err != nil {
+		fmt.Printf("[World] Error updating world data: %v\n", err)
+		return
 	}
 
 	fmt.Println("[World] Custom data set successfully. New metadata saved as", newMetaFilePath)
@@ -716,6 +750,11 @@ func handleSetParent(args []string) {
 	delete := true // 前のデータを自動で削除するかどうか
 	if len(args) > 2 {
 		delete = args[2] == "true"
+	}
+
+	if childCid == parentCid {
+		fmt.Println("[World] Error: Child and parent CIDs cannot be the same.")
+		return
 	}
 
 	// load password
@@ -796,11 +835,18 @@ func handleSetParent(args []string) {
 	newParentMetaPath = filepath.Join(".fw", "objects", newParentMetaCid)
 
 	if delete {
-		err = localFS.Remove(parentMetaPath)
+		err = removeOldMetaFile(parentCid, newParentMetaPath)
 		if err != nil {
-			fmt.Printf("[World] Error deleting old parent metadata: %v\n", err)
+			fmt.Printf("[World] Error removing old metadata: %v\n", err)
 			return
 		}
+	}
+
+	// world dataの更新
+	err = updateWorldData(parentCid, newParentMetaCid)
+	if err != nil {
+		fmt.Printf("[World] Error updating world data: %v\n", err)
+		return
 	}
 
 	fmt.Println("[World] Parent data set successfully. New metadata saved as", newParentMetaPath)
@@ -825,7 +871,7 @@ func handleSetPassword(args []string) {
 	fmt.Println("[World] Password set successfully.")
 }
 
-func updateWorldData(metaCid string) error {
+func addWorldData(metaCid string) error {
 	headData, err := localFS.ReadFile(".fw/HEAD")
 	if err != nil {
 		return err
@@ -849,7 +895,91 @@ func updateWorldData(metaCid string) error {
 		return err
 	}
 
+	for _, cid := range worldData.CID {
+		if cid == metaCid {
+			return nil
+		}
+	}
+
 	worldData.CID = append(worldData.CID, metaCid)
+
+	newWorldData, err := yaml.Marshal(&worldData)
+	if err != nil {
+		return err
+	}
+
+	return localFS.WriteFile(worldDataPath, newWorldData)
+}
+
+func removeWorldData(metaCid string) error {
+	headData, err := localFS.ReadFile(".fw/HEAD")
+	if err != nil {
+		return err
+	}
+
+	var headYamlData HeadData
+	err = yaml.Unmarshal(headData, &headYamlData)
+	if err != nil {
+		return err
+	}
+
+	worldDataPath := filepath.Join(".fw", "worlds", headYamlData.Guid)
+	worldDataStr, err := localFS.ReadFile(worldDataPath)
+	if err != nil {
+		return err
+	}
+
+	var worldData WorldData
+	err = yaml.Unmarshal(worldDataStr, &worldData)
+	if err != nil {
+		return err
+	}
+
+	for i, cid := range worldData.CID {
+		if cid == metaCid {
+			worldData.CID = append(worldData.CID[:i], worldData.CID[i+1:]...)
+			break
+		}
+	}
+
+	newWorldData, err := yaml.Marshal(&worldData)
+	if err != nil {
+		return err
+	}
+
+	return localFS.WriteFile(worldDataPath, newWorldData)
+}
+
+func updateWorldData(metaOldCid string, metaNewCid string) error {
+	headData, err := localFS.ReadFile(".fw/HEAD")
+	if err != nil {
+		return err
+	}
+
+	var headYamlData HeadData
+	err = yaml.Unmarshal(headData, &headYamlData)
+	if err != nil {
+		return err
+	}
+
+	worldDataPath := filepath.Join(".fw", "worlds", headYamlData.Guid)
+	worldDataStr, err := localFS.ReadFile(worldDataPath)
+	if err != nil {
+		return err
+	}
+
+	var worldData WorldData
+	err = yaml.Unmarshal(worldDataStr, &worldData)
+	if err != nil {
+		return err
+	}
+
+	for i, cid := range worldData.CID {
+		if cid == metaOldCid {
+			worldData.CID[i] = metaNewCid
+			break
+		}
+	}
 
 	newWorldData, err := yaml.Marshal(&worldData)
 	if err != nil {
