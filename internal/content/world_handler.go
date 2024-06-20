@@ -595,8 +595,6 @@ func handleUpdate(args []string) {
 		return
 	}
 
-	newMetaFilePath = filepath.Join(".fw", "objects", newMetaCid)
-
 	err = localFS.Remove(metaFilePath)
 	if err != nil {
 		fmt.Printf("[World] Error deleting old metadata: %v\n", err)
