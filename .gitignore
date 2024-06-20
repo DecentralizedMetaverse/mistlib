@@ -151,3 +151,5 @@ combined_cs_files.txt
 ipfs.zip
 
 .exe
+
+bin/*
