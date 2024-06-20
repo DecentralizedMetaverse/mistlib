@@ -23,6 +23,9 @@ func main() {
 		http.HandleFunc("/get-world-cid", content.HandleGetWorldCIDAPI)
 		http.HandleFunc("/download-world", content.HandleDownloadWorldAPI)
 		http.HandleFunc("/get-world-data", content.HandleGetWorldDataAPI)
+		http.HandleFunc("/set-custom-data", content.HandleSetCustomDataAPI)
+		http.HandleFunc("/set-parent", content.HandleSetParentAPI)
+		http.HandleFunc("/update", content.HandleUpdateAPI)
 
 		fmt.Println("Starting server on :8080")
 		http.ListenAndServe(":8080", nil)

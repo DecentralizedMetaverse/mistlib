@@ -68,3 +68,9 @@ func HandleSetParentAPI(w http.ResponseWriter, r *http.Request) {
 	handleSetParent(strings.Split(args, " "))
 	w.Write([]byte("Set parent operation completed."))
 }
+
+func HandleUpdateAPI(w http.ResponseWriter, r *http.Request) {
+	args := r.URL.Query().Get("args")
+	handleUpdate(strings.Split(args, " "))
+	w.Write([]byte("Update operation completed."))
+}

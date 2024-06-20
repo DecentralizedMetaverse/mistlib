@@ -17,6 +17,8 @@ func RunCommand(name string, args []string) {
 		"download-world":  handleDownloadWorld,
 		"get-world-data":  handleGetWorldData,
 		"set-custom-data": handleSetCustomData,
+		"set-parent":      handleSetParent,
+		"update":          handleUpdate,
 	}
 
 	if handler, found := commandHandler[name]; found {
