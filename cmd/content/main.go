@@ -6,9 +6,12 @@ import (
 	"os"
 
 	"mistlib/internal/content"
+	"mistlib/internal/content/ipfs"
 )
 
 func main() {
+	ipfs.StartDaemon()
+
 	if len(os.Args) > 1 {
 		// コマンドライン引数が存在する場合、コマンドラインモードで実行
 		content.RunCommand(os.Args[1], os.Args[2:])
