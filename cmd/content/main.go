@@ -20,7 +20,7 @@ func main() {
 		http.HandleFunc("/init", content.HandleInitAPI)
 		http.HandleFunc("/switch", content.HandleSwitchAPI)
 		http.HandleFunc("/get", content.HandleGetAPI)
-		http.HandleFunc("/put", content.HandlePutAPI)
+		http.HandleFunc("/add", content.HandleAddAPI)
 		http.HandleFunc("/set-password", content.HandleSetPasswordAPI)
 		http.HandleFunc("/cat", content.HandleCatAPI)
 		http.HandleFunc("/get-world-cid", content.HandleGetWorldCIDAPI)

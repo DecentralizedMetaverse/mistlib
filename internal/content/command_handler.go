@@ -10,7 +10,7 @@ func RunCommand(name string, args []string) {
 		"init":            handleInit,
 		"switch":          handleSwitch,
 		"get":             handleGet,
-		"put":             handlePut,
+		"put":             handleAdd,
 		"set-password":    handleSetPassword,
 		"cat":             handleCat,
 		"get-world-cid":   handleGetWorldCID,

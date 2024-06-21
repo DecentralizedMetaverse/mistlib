@@ -422,10 +422,15 @@ func handleGet(args []string) {
 	fmt.Printf("[World] File downloaded, decrypted, and saved to %s\n", filePath)
 }
 
-func handlePut(args []string) {
+func handleAdd(args []string) {
 	if len(args) < 10 {
 		fmt.Println("[World] Usage: fw put <file> <x> <y> <z> <rx> <ry> <rz> <sx> <sy> <sz>")
 		return
+	}
+
+	// argsがfileしかない場合は、それ以降を全てdefaultのlocationで設定する
+	if len(args) == 1 {
+		args = append(args, "0", "0", "0", "0", "0", "0", "1", "1", "1")
 	}
 
 	if err := loadPassword(); err != nil {
