@@ -144,6 +144,51 @@ func handleDownloadWorld(args []string) {
 		fmt.Printf("[World] Error saving world data: %v\n", err)
 		return
 	}
+
+	// 各contentについてもダウンロードする
+	for _, contentCid := range worldYamlData.CID {
+		// ipfsからmeta dataをダウンロード
+		contentPath := filepath.Join(".fw", "objects", contentCid)
+		err = ipfs.Download(contentCid, contentPath)
+		if err != nil {
+			fmt.Printf("[World] Error downloading content data: %v\n", err)
+			return
+		}
+
+		contentData, err := localFS.ReadFile(contentPath)
+		if err != nil {
+			fmt.Printf("[World] Error reading content data: %v\n", err)
+			return
+		}
+
+		decryptedContentData, err := decryptData(contentData)
+		if err != nil {
+			fmt.Printf("[World] Error decrypting content data: %v\n", err)
+			return
+		}
+
+		decompressedContentData, err := decompressData(decryptedContentData)
+		if err != nil {
+
+			fmt.Printf("[World] Error decompressing content data: %v\n", err)
+			return
+		}
+
+		var contentYamlData MetaData
+		err = yaml.Unmarshal(decompressedContentData, &contentYamlData)
+		if err != nil {
+			fmt.Printf("[World] Error parsing content data: %v\n", err)
+			return
+		}
+
+		// ipfsからcontentをダウンロード
+		contentFilePath := filepath.Join(".fw", "content", contentYamlData.CID)
+		err = ipfs.Download(contentYamlData.CID, contentFilePath)
+		if err != nil {
+			fmt.Printf("[World] Error downloading content: %v\n", err)
+			return
+		}
+	}
 }
 
 func handleGetWorldCID(args []string) {
