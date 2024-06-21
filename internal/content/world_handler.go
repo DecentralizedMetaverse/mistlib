@@ -189,6 +189,23 @@ func handleDownloadWorld(args []string) {
 			return
 		}
 	}
+
+	// world listを更新
+	worldListPath := filepath.Join(".fw", "world_list")
+	worldDict, err := loadWorldList(worldListPath)
+	if err != nil {
+		fmt.Printf("[World] Error reading world list: %v\n", err)
+		return
+	}
+
+	worldDict[worldYamlData.GUID] = worldYamlData.Name
+	err = saveWorldList(worldListPath, worldDict)
+	if err != nil {
+		fmt.Printf("[World] Error updating world list: %v\n", err)
+		return
+	}
+
+	fmt.Println("[World] World data downloaded successfully.")
 }
 
 func handleGetWorldCID(args []string) {
@@ -266,8 +283,6 @@ func handleSwitch(args []string) {
 
 	worldName := args[0]
 
-	fmt.Println("[World] Creating new world...")
-
 	worldListPath := filepath.Join(".fw", "world_list")
 	worldDict, err := loadWorldList(worldListPath)
 	if err != nil {
@@ -285,6 +300,7 @@ func handleSwitch(args []string) {
 
 	// 何もない場合の処理
 	if len(keys) == 0 {
+		fmt.Println("[World] Creating new world...")
 		guid, err := uuid.NewUUID()
 		if err != nil {
 			fmt.Printf("[World] Error generating GUID: %v\n", err)
@@ -468,14 +484,12 @@ func handleGet(args []string) {
 }
 
 func handleAdd(args []string) {
-	if len(args) < 10 {
-		fmt.Println("[World] Usage: fw put <file> <x> <y> <z> <rx> <ry> <rz> <sx> <sy> <sz>")
-		return
-	}
-
 	// argsがfileしかない場合は、それ以降を全てdefaultのlocationで設定する
 	if len(args) == 1 {
 		args = append(args, "0", "0", "0", "0", "0", "0", "1", "1", "1")
+	} else if len(args) < 10 {
+		fmt.Println("[World] Usage: fw put <file> <x> <y> <z> <rx> <ry> <rz> <sx> <sy> <sz>")
+		return
 	}
 
 	if err := loadPassword(); err != nil {
@@ -495,7 +509,7 @@ func handleAdd(args []string) {
 		return
 	}
 
-	fmt.Printf("[World] Putting world binary data from %s with coordinates (%f, %f, %f), rotation (%f, %f, %f), scale (%f, %f, %f)\n",
+	fmt.Printf("[World] Adding world binary data from %s with coordinates (%f, %f, %f), rotation (%f, %f, %f), scale (%f, %f, %f)\n",
 		filePath, coords[0], coords[1], coords[2], coords[3], coords[4], coords[5], coords[6], coords[7], coords[8])
 
 	file, err := os.Open(filePath)
@@ -538,7 +552,7 @@ func handleAdd(args []string) {
 		return
 	}
 
-	// Simulate IPFS Upload
+	// IPFS Upload
 	cid, err := ipfs.Upload(objectPath)
 	if err != nil {
 		fmt.Printf("[World] Error uploading file to IPFS: %v\n", err)

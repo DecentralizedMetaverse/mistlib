@@ -2,6 +2,7 @@ package content
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -23,7 +24,8 @@ func parseCoordinates(args []string) ([]float64, error) {
 func generateMetaDataContent(filePath, cid string, coords []float64) []byte {
 	var metaData MetaData
 	metaData.CID = cid
-	metaData.File = filePath
+	fileName := filepath.Base(filePath)
+	metaData.File = fileName
 	metaData.X = coords[0]
 	metaData.Y = coords[1]
 	metaData.Z = coords[2]
