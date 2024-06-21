@@ -215,7 +215,7 @@ func handleGetWorldCID(args []string) {
 
 func handleSwitch(args []string) {
 	if len(args) < 1 {
-		fmt.Println("[World] Usage: fw create <world-name>")
+		fmt.Println("[World] Usage: fw switch <world-name>")
 		return
 	}
 
@@ -230,34 +230,66 @@ func handleSwitch(args []string) {
 		return
 	}
 
-	if _, exists := worldDict[worldName]; exists {
-		fmt.Printf("[World] Error: World %s already exists\n", worldName)
+	// worldDictのvalueの方でworldNameがあるかチェックする
+	keys := []string{}
+	for key, value := range worldDict {
+		if value == worldName {
+			keys = append(keys, key)
+		}
+	}
+
+	// 何もない場合の処理
+	if len(keys) == 0 {
+		guid, err := uuid.NewUUID()
+		if err != nil {
+			fmt.Printf("[World] Error generating GUID: %v\n", err)
+			return
+		}
+
+		worldGuid := guid.String()
+		err = updateHead(worldName, worldGuid)
+		if err != nil {
+			fmt.Printf("[World] Error updating HEAD: %v\n", err)
+			return
+		}
+
+		err = createWorldFile(worldName, worldGuid)
+		if err != nil {
+			fmt.Printf("[World] Error creating world file: %v\n", err)
+			return
+		}
+
+		worldDict[worldGuid] = worldName
+		err = saveWorldList(worldListPath, worldDict)
+		if err != nil {
+			fmt.Printf("[World] Error updating world list: %v\n", err)
+			return
+		}
 		return
 	}
 
-	guid, err := uuid.NewUUID()
-	if err != nil {
-		fmt.Printf("[World] Error generating GUID: %v\n", err)
-		return
+	// 1つ以上ある場合の処理
+	selection := 1
+	if len(keys) > 1 {
+		// 選択肢を表示する
+		fmt.Println("Multiple worlds found with the same name. Please select one:")
+		for i, key := range keys {
+			fmt.Printf("%d: %s\n", i+1, key)
+		}
+
+		// 選択を受け付ける
+		fmt.Print("Enter the number of the world you want to switch to: ")
+		_, err := fmt.Scan(&selection)
+		if err != nil {
+			fmt.Printf("[World] Error reading input: %v\n", err)
+			return
+		}
 	}
 
-	worldGuid := guid.String()
-	err = updateHead(worldName, worldGuid)
+	// headを更新する
+	err = updateHead(keys[selection-1], worldDict[keys[selection-1]])
 	if err != nil {
 		fmt.Printf("[World] Error updating HEAD: %v\n", err)
-		return
-	}
-
-	err = createWorldFile(worldName, worldGuid)
-	if err != nil {
-		fmt.Printf("[World] Error creating world file: %v\n", err)
-		return
-	}
-
-	worldDict[worldName] = worldGuid
-	err = saveWorldList(worldListPath, worldDict)
-	if err != nil {
-		fmt.Printf("[World] Error updating world list: %v\n", err)
 		return
 	}
 }
