@@ -16,6 +16,7 @@ func RunCommand(name string, args []string) {
 		"get-world-cid":   handleGetWorldCID,
 		"download-world":  handleDownloadWorld,
 		"get-world-info":  handleGetWorldInfo,
+		"unpack":          handleUnpack,
 		"set-custom-data": handleSetCustomData,
 		"set-parent":      handleSetParent,
 		"update":          handleUpdate,

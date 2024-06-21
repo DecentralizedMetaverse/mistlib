@@ -287,7 +287,7 @@ func handleSwitch(args []string) {
 	}
 
 	// headを更新する
-	err = updateHead(keys[selection-1], worldDict[keys[selection-1]])
+	err = updateHead(worldDict[keys[selection-1]], keys[selection-1])
 	if err != nil {
 		fmt.Printf("[World] Error updating HEAD: %v\n", err)
 		return
@@ -1118,4 +1118,128 @@ func handleCat(args []string) {
 	}
 
 	fmt.Printf("[World] Content of %s:\n%s\n", filePath, string(decompressedFileData))
+}
+
+func handleUnpack(args []string) {
+	// headを読み込む
+	headData, err := localFS.ReadFile(".fw/HEAD")
+	if err != nil {
+		fmt.Printf("[World] Error reading HEAD: %v\n", err)
+		return
+	}
+
+	var headYamlData HeadData
+	err = yaml.Unmarshal(headData, &headYamlData)
+	if err != nil {
+		fmt.Printf("[World] Error parsing HEAD: %v\n", err)
+		return
+	}
+
+	worldDataPath := filepath.Join(".fw", "worlds", headYamlData.Guid)
+	worldDataStr, err := localFS.ReadFile(worldDataPath)
+	if err != nil {
+		fmt.Printf("[World] Error reading world data: %v\n", err)
+		return
+	}
+
+	var worldData WorldData
+	err = yaml.Unmarshal(worldDataStr, &worldData)
+	if err != nil {
+		fmt.Printf("[World] Error parsing world data: %v\n", err)
+		return
+	}
+
+	var worldYamlData WorldData
+	err = yaml.Unmarshal(worldDataStr, &worldYamlData)
+	if err != nil {
+		fmt.Printf("[World] Error parsing world data: %v\n", err)
+		return
+	}
+
+	err = loadPassword()
+	if err != nil {
+		fmt.Printf("[World] Error loading password: %v\n", err)
+		return
+	}
+
+	// worldのobject配置情報を作成する
+	worldAllData := make([]MetaData, 0)
+
+	for _, cid := range worldData.CID {
+		// meta dataを読み込みfileのcidを取得
+		metaFilePath := filepath.Join(".fw", "objects", cid)
+		metaFile, err := localFS.ReadFile(metaFilePath)
+		if err != nil {
+			fmt.Printf("[World] Error reading metadata %s: %v\n", metaFilePath, err)
+			return
+		}
+
+		decryptedMetaFile, err := decryptData(metaFile)
+		if err != nil {
+			fmt.Printf("[World] Error decrypting metadata %s: %v\n", metaFilePath, err)
+			return
+		}
+
+		decompressedMetaFile, err := decompressData(decryptedMetaFile)
+		if err != nil {
+			fmt.Printf("[World] Error decompressing metadata %s: %v\n", metaFilePath, err)
+			return
+		}
+
+		var metaFileData MetaData
+		err = yaml.Unmarshal(decompressedMetaFile, &metaFileData)
+		if err != nil {
+			fmt.Printf("[World] Error parsing metadata %s: %v\n", metaFilePath, err)
+			return
+		}
+
+		// worldAllDataにobject情報を追加
+		worldAllData = append(worldAllData, metaFileData)
+
+		// fileを読み込みcontentに保存
+		filePath := filepath.Join(".fw", "content", filepath.Base(metaFileData.File))
+		// Simulate IPFS Download
+		err = ipfs.Download(metaFileData.CID, filePath)
+		if err != nil {
+			fmt.Printf("[World] Error downloading file from IPFS: %v\n", err)
+			return
+		}
+
+		encryptedFileData, err := localFS.ReadFile(filePath)
+		if err != nil {
+			fmt.Printf("[World] Error reading file %s: %v\n", filePath, err)
+			return
+		}
+
+		decryptedFileData, err := decryptData(encryptedFileData)
+		if err != nil {
+			fmt.Printf("[World] Error decrypting file %s: %v\n", filePath, err)
+			return
+		}
+
+		decompressedFileData, err := decompressData(decryptedFileData)
+		if err != nil {
+			fmt.Printf("[World] Error decompressing file %s: %v\n", filePath, err)
+			return
+		}
+
+		err = localFS.WriteFile(filePath, decompressedFileData)
+		if err != nil {
+			fmt.Printf("[World] Error saving decompressed file %s: %v\n", filePath, err)
+			return
+		}
+	}
+
+	// worldのobject配置情報を保存
+	savePath := filepath.Join(".fw", "content", headYamlData.CurrentWorld+".yaml")
+	worldAllDataYaml, err := yaml.Marshal(&worldAllData)
+	if err != nil {
+		fmt.Printf("[World] Error parsing world data: %v\n", err)
+		return
+	}
+	err = localFS.WriteFile(savePath, worldAllDataYaml)
+	if err != nil {
+		fmt.Printf("[World] Error saving world data: %v\n", err)
+		return
+	}
 }

@@ -64,6 +64,12 @@ func HandleGetWorldInfoAPI(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Get world data operation completed."))
 }
 
+func HandleUnpackAPI(w http.ResponseWriter, r *http.Request) {
+	args := r.URL.Query().Get("args")
+	handleUnpack(strings.Split(args, " "))
+	w.Write([]byte("Unpack operation completed."))
+}
+
 func HandleSetCustomDataAPI(w http.ResponseWriter, r *http.Request) {
 	args := r.URL.Query().Get("args")
 	handleSetCustomData(strings.Split(args, " "))
