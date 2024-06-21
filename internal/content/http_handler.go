@@ -29,6 +29,12 @@ func HandleAddAPI(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Put operation completed."))
 }
 
+func HandleRemoveAPI(w http.ResponseWriter, r *http.Request) {
+	args := r.URL.Query().Get("args")
+	handleRemove(strings.Split(args, " "))
+	w.Write([]byte("Remove operation completed."))
+}
+
 func HandleSetPasswordAPI(w http.ResponseWriter, r *http.Request) {
 	password := r.URL.Query().Get("password")
 	handleSetPassword([]string{password})

@@ -544,6 +544,29 @@ func handleAdd(args []string) {
 	fmt.Println("[World] World data updated successfully. CID: " + metaCid)
 }
 
+func handleRemove(args []string) {
+	if len(args) < 1 {
+		fmt.Println("[World] Usage: fw remove <cid>")
+		return
+	}
+
+	cid := args[0]
+	err := removeWorldData(cid)
+	if err != nil {
+		fmt.Printf("[World] Error removing world data: %v\n", err)
+		return
+	}
+
+	metaFilePath := filepath.Join(".fw", "objects", cid)
+	err = localFS.Remove(metaFilePath)
+	if err != nil {
+		fmt.Printf("[World] Error deleting file %s: %v\n", metaFilePath, err)
+		return
+	}
+
+	fmt.Println("[World] File deleted successfully.")
+}
+
 func handleUpdate(args []string) {
 	if len(args) < 10 {
 		fmt.Println("[World] Usage: fw update <meta-cid> <x> <y> <z> <rx> <ry> <rz> <sx> <sy> <sz>")
