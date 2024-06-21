@@ -28,7 +28,7 @@ func StartDaemon() error {
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/C", "start", ipfsExecutablePath, "daemon")
+		cmd = exec.Command("start", "cmd", "/k", ipfsExecutablePath, "daemon")
 	} else {
 		cmd = exec.Command("nohup", ipfsExecutablePath, "daemon", "&")
 	}
