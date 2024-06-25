@@ -153,3 +153,4 @@ ipfs.zip
 .exe
 
 bin/*
+test/copy.py

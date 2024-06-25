@@ -1,6 +1,6 @@
 import requests
 
-BASE_URL = "http://localhost:8080"
+BASE_URL = "http://localhost:8081"
 
 def test_handle_init_api():
     response = requests.get(f"{BASE_URL}/init")
@@ -40,12 +40,14 @@ def test_handle_get_world_data_api():
 
 if __name__ == "__main__":
     # Testing each endpoint
-    test_handle_init_api()
-    test_handle_switch_api("example_world")
-    test_handle_get_api("example_cid")
-    test_handle_put_api("arg1 arg2 arg3")
-    test_handle_set_password_api("example_password")
-    test_handle_cat_api("example_file_hash")
-    test_handle_get_world_cid_api()
-    test_handle_download_world_api("example_cid")
-    test_handle_get_world_data_api()
+    # test_handle_init_api()
+    # test_handle_switch_api("example_world")
+    # test_handle_get_api("example_cid")
+    # test_handle_put_api("arg1 arg2 arg3")
+    # test_handle_set_password_api("example_password")
+    # test_handle_cat_api("example_file_hash")
+    # test_handle_get_world_cid_api()
+    # test_handle_download_world_api("example_cid")
+    # test_handle_get_world_data_api()
+    response = requests.get(f"{BASE_URL}/switch", params={"worldName": "FogWorld"})
+    print(response.text)

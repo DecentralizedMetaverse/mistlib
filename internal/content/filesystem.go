@@ -80,3 +80,18 @@ func (fs *LocalFileSystem) Remove(path string) error {
 	}
 	return nil
 }
+
+func (fs *LocalFileSystem) CopyFile(src, dst string) error {
+	fs.mu.Lock()
+	defer fs.mu.Unlock()
+
+	data, err := ioutil.ReadFile(src)
+	if err != nil {
+		return fmt.Errorf("file not found: %s", src)
+	}
+	err = ioutil.WriteFile(dst, data, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}

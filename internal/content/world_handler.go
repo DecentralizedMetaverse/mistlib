@@ -503,6 +503,16 @@ func handleAdd(args []string) {
 		return
 	}
 
+	// fileをcopyし、.fw/contentに保存する
+	fileName := filepath.Base(filePath)
+	contentPath := filepath.Join(".fw", "content", fileName)
+
+	err = localFS.CopyFile(filePath, contentPath)
+	if err != nil {
+		fmt.Printf("[World] Error copying file: %v\n", err)
+		return
+	}
+
 	coords, err := parseCoordinates(args[1:])
 	if err != nil {
 		fmt.Printf("[World] Invalid input: %v\n", err)

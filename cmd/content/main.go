@@ -10,12 +10,12 @@ import (
 )
 
 func main() {
-	ipfs.StartDaemon()
 
 	if len(os.Args) > 1 {
 		// コマンドライン引数が存在する場合、コマンドラインモードで実行
 		content.RunCommand(os.Args[1], os.Args[2:])
 	} else {
+		ipfs.StartDaemon()
 		// 引数がない場合、HTTPサーバーを起動
 		http.HandleFunc("/init", content.HandleInitAPI)
 		http.HandleFunc("/switch", content.HandleSwitchAPI)
@@ -32,7 +32,8 @@ func main() {
 		http.HandleFunc("/set-parent", content.HandleSetParentAPI)
 		http.HandleFunc("/update", content.HandleUpdateAPI)
 
-		fmt.Println("Starting server on :8080")
-		http.ListenAndServe(":8080", nil)
+		fmt.Println("Starting server on :8081")
+		http.ListenAndServe(":8081", nil)
+
 	}
 }
